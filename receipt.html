@@ -112,24 +112,16 @@
                 <p class="total-price">Total Price: RM${receiptData.totalPrice}</p>
             `;
 
-            // Generate QR code with receipt data
-            const qrData = {
-                date: new Date().toLocaleDateString(),
-                paymentMethod: receiptData.paymentMethod,
-                items: receiptData.items.map(item => ({
-                    name: item.name,
-                    originalPrice: item.originalPrice,
-                    discount: item.discount,
-                    finalPrice: (parseFloat(item.originalPrice) - (parseFloat(item.originalPrice) * (item.discount / 100))).toFixed(2),
-                    quantity: item.quantity
-                })),
-                totalPrice: receiptData.totalPrice
-            };
+            // Generate QR code with simplified receipt data
+            const qrText = `Date: ${new Date().toLocaleDateString()}, Payment Method: ${receiptData.paymentMethod}, Total Price: RM${receiptData.totalPrice}`;
+            
+            // Log the QR code data
+            console.log("QR Data:", qrText);
 
             $('#qrCode').qrcode({
-                text: JSON.stringify(qrData), // Encode the structured data as a JSON string
-                width: 128,
-                height: 128
+                text: qrText, // Use the simplified string
+                width: 256, // Increase size for better scanning
+                height: 256  // Increase size for better scanning
             });
         } else {
             document.getElementById("receiptSection").innerHTML = "<p>No receipt data found.</p>";
