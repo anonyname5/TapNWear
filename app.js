@@ -127,17 +127,51 @@ function processPayment(method) {
                 discount: fixedDiscount,
                 finalPrice: (discountedPrice * item.quantity).toFixed(2),
                 quantity: item.quantity
+                
             };
         }),
         paymentMethod: method,
-        totalPrice: document.getElementById('total-price').textContent
+        date: new Date().toLocaleDateString()
     };
-    localStorage.setItem('receiptData', JSON.stringify(paymentData));
-    
+
+    // Calculate total price before discount
+    const totalBeforeDiscount = selectedItems.reduce((total, itemKey) => {
+        const item = items[itemKey];
+        return total + (item.price * item.quantity);
+    }, 0);
+
+    // Calculate discount amount
+    const discountAmount = totalBeforeDiscount * (fixedDiscount / 100);
+
+    // Add total price and discount amount to paymentData
+    paymentData.totalPrice = (totalBeforeDiscount - discountAmount).toFixed(2);
+    paymentData.discountAmount = discountAmount.toFixed(2); // Store discount amount
+
+    // Store payment data in localStorage for QR code generation
+    localStorage.setItem('paymentData', JSON.stringify(paymentData));
 
     // Redirect to receipt page
     window.location.href = 'receipt.html';
 }
+
+// Populate receipt details
+const qrData = JSON.parse(localStorage.getItem('paymentData')); // Ensure this line is present
+document.getElementById('receipt-date').textContent = qrData.date;
+document.getElementById('payment-method').textContent = qrData.paymentMethod;
+
+const itemsPurchased = document.getElementById('items-purchased');
+let totalOriginalPrice = 0; // To calculate total original price
+qrData.items.forEach(item => {
+    const li = document.createElement('li');
+    li.innerHTML = `${item.name}: <span style="text-decoration: line-through;">RM${item.originalPrice}</span> - RM${item.finalPrice} (${item.discount}%)`;
+    itemsPurchased.appendChild(li);
+    totalOriginalPrice += parseFloat(item.originalPrice) * item.quantity; // Accumulate original price
+});
+
+// Display discount information
+const discountInfo = document.getElementById('discount-info');
+discountInfo.innerHTML = `Original Total: <span style="text-decoration: line-through;">RM${totalOriginalPrice.toFixed(2)}</span> - RM${qrData.totalPrice} (${qrData.discountAmount} discount)`;
+document.getElementById('total-price').textContent = `RM${qrData.totalPrice}`;
 
 function redirectToReceipt(items, paymentMethod) {
     // items should be an array of objects like:
